@@ -1,17 +1,34 @@
 CC	:= gcc
 CFLAGS	:= -Wall
-INC	:= include
+INC	:= inc
 
-SRC	:= src/main.c
 
-all:	$(SRC)
-	$(CC) $(CFLAGS) -I$(INC) $< -o build/version
+BINDIR 	:= bin
+SRCDIR 	:= src
+OBJDIR	:= obj
 
-clean:
-	
+SRC	:= $(wildcard $(SRCDIR)/*.c)
+OBJ  	:= $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRC))
+TARGET	:= semver
 
-cleanall:
-	rm -rf build/version
+INPATH 	:= /usr/bin/local
 
-install: build/version
-	cp build/version /usr/local/bin/
+all: $(TARGET)
+	@echo "Build completed successfully"
+
+$(TARGET): $(OBJ)
+	@$(CC) $(CFLAGS) -I$(INC) -o $(BINDIR)/$(TARGET) $^
+	@echo "LD $^"
+
+$(OBJDIR)/%.o : $(SRCDIR)/%.c
+	@$(CC) $(CFLAGS) -I$(INC) -c -o $@ $<
+	@echo "CC $^"
+
+clean: 
+	rm -rf $(OBJDIR)/*.o
+
+cleanall: clean
+	rm -rf bin/version
+
+install: $(BINDIR)/$(TARGET)
+	cp $< $(INPATH)

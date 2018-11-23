@@ -2,13 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
-#include <regex.h>
 
 #include "version.h"
 
 static int verbose_flag;
-
-void checkVersionFormat( const char *pattern, const char *string );
 
 int main( int argc, char ** argv ) {
 	int c;
@@ -109,7 +106,7 @@ int main( int argc, char ** argv ) {
 }
 
 void displayHelp() {
-	printf( "version version %d.%d.%d%s\n"
+	printf( "semver version %d.%d.%d%s%s\n"
 		"Usage:  version [option] utility\n"
 		"\n"
 		"Mandatory arguments to long options are mandatory for short options too.\n"
@@ -122,45 +119,13 @@ void displayHelp() {
 		"\n"
 		"The VERSION argument is a string in format X.Y.Z where X is MAJOR version, Y is MINOR\n"
 		"version, and Z is patch version. The format follows that specified at <https://semver.org/\n"
+		"pre-release version is identified by an appended hyphen followed by only ASCII alphanumeric \n"
+		"characters and hyphens. Identifiers MUST NOT include leading zeros as specified in %s\n"
 		"\n"
 		"Full documentation at: <https://www.aesycos.com/doc/version>\n"
-		"or locally available via: `man version`\n",MAJOR,MINOR,PATCH,POSTFIX );
+		"or locally available via: `man version`\n",MAJOR,MINOR,PATCH,PRERELEASE,BUILDMETA,SEMVER );
 }
 
 void displayVersion() {
-
-}
-
-void checkVersionFormat( const char *pattern, const char *string ) {
-	regex_t re;
-	char msgbuf[100];
-
-	#ifdef DEBUG
-	printf("Pattern: %s\n", pattern);
-	printf("String: %s\n", string);
-	#endif
-
-	if ( regcomp( &re, pattern, REG_EXTENDED) ) {
-		fprintf( stderr, "Could not compile regex\n");
-		exit(1); 
-	}
-
-	int status = regexec( &re, string, (size_t) 0, NULL, 0);
-
-	if (!status) {
-		#ifdef DEBUG
-		printf("Matched\n");
-		#endif
-		return;
-	} else if ( status == REG_NOMATCH ) {
-		fprintf( stderr, "Error: VERSION format is incorrect\n" );
-		return;
-	} else {
-		regerror( status, &re, msgbuf, sizeof(msgbuf) );
-		fprintf( stderr, "Regex match failed: %s\n", msgbuf);
-		exit(1);
-	}
-
-	regfree(&re);
-
+	printf("semver version %d.%d.%d%s%s\n",MAJOR,MINOR,PATCH,PRERELEASE,BUILDMETA);
 }
