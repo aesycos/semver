@@ -17,8 +17,18 @@ void getPrerelease( const char *verString );
 void getBuildmeta( const char *verString );
 void getPrecedence( const char *verString );
 void getVersion( const char *utilityName );
-void checkVersionFormat( const char *pattern, const char *string );
+int checkVersionFormat( const char *string );
 int semverNewer( const char *ver1, const char *ver2 );
+struct version splitVersionString( const char *verStr );
+int compareVersion( const char *ver1, const char *ver2 );
 
+struct version
+{
+	char major[16];
+	char minor[16];
+	char patch[16];
+	char prerelease[24];
+	char build[32];
+};
 
 #endif

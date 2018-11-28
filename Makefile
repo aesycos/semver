@@ -1,5 +1,5 @@
 CC	:= gcc
-CFLAGS	:= -Wall
+CFLAGS	:= -Wall -DDEBUG
 INC	:= inc
 
 
@@ -11,7 +11,7 @@ SRC	:= $(wildcard $(SRCDIR)/*.c)
 OBJ  	:= $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRC))
 TARGET	:= semver
 
-INPATH 	:= /usr/bin/local
+INPATH 	:= /usr/local/bin/
 
 all: $(TARGET)
 	@echo "Build completed successfully"
