@@ -55,11 +55,11 @@ int semverNewer( const char *ver1, const char *ver2 )
   return 0;
 }
 
-struct version splitVersionString( const char *verStr )
+void splitVersionString( const char *verStr, struct version *splitVersion )
 {
   checkVersionFormat( verStr );
   regmatch_t matchptr[1];
-  struct version splitVersion;
+  //struct version splitVersion;
 
   match ( "([[:digit:]].){2}[[:digit:]]", verStr, matchptr, (size_t) 1 );
   
@@ -70,20 +70,19 @@ struct version splitVersionString( const char *verStr )
   // for some reason length is a single byte short related to how regexec()
   // returns, start and end of substring in matchptr[] ARRAYS START AT 0
   strncpy( shortVer, verStr+matchptr[0].rm_so-1, length+1);
-  printf( "Short Version String: %s\n", shortVer );
-  strcpy( splitVersion.major, strtok( shortVer, "." ));
-  strcpy( splitVersion.minor, strtok( NULL, "." ));
-  strcpy( splitVersion.patch, strtok( NULL, "."));
+  strcpy( splitVersion->major, strtok( shortVer, "." ));
+  strcpy( splitVersion->minor, strtok( NULL, "." ));
+  strcpy( splitVersion->patch, strtok( NULL, "."));
   
   // extract prerelease version
-  if(match("-[a-zA-Z0-9.-]*", verStr, matchptr, (size_t) 1 ))
+  if(match("-[[:alnum:].-]+", verStr, matchptr, (size_t) 1 ))
   {
     char shortPR[24] = {'\0'};
     // +1 on pointer to string and -1 on # of chars is to remove '-' from
     // prerelease
     strncpy( shortPR, verStr+matchptr[0].rm_so+1, 
           (matchptr[0].rm_eo - matchptr[0].rm_so)-1 );
-    strcpy( splitVersion.prerelease, shortPR);
+    strcpy( splitVersion->prerelease, shortPR);
   }
   //else
   //{
@@ -91,19 +90,19 @@ struct version splitVersionString( const char *verStr )
   //}
   
   // extract build info
-  if(match("\\+[a-zA-Z0-9.-]+", verStr, matchptr, (size_t) 1))
+  if(match("\\+[[:alnum:].-]+", verStr, matchptr, (size_t) 1))
   {
     char shortBuild[32] = {'\0'};
     strncpy( shortBuild, verStr+matchptr[0].rm_so+1,
           (matchptr[0].rm_eo - matchptr[0].rm_so)-1 );
-    strcpy( splitVersion.build, shortBuild);
+    strcpy( splitVersion->build, shortBuild);
   }
   //else
   //{
   //  splitVersion.build = "";
   //}
 
-    return splitVersion;
+    //return splitVersion;
 }
 
 int compareVersion( const char *ver1, const char *ver2 )
@@ -114,22 +113,102 @@ int compareVersion( const char *ver1, const char *ver2 )
     exit(127);
   // split version strings by part MAJOR MINOR PATCH [PRERELEASE[BUILD]]
 	
-  struct version splitVer1 = splitVersionString( ver1 );
-  struct version splitVer2 = splitVersionString( ver2 );
+  struct version *splitVer1 = malloc(sizeof(struct version));
+  splitVersionString( ver1, splitVer1 );
+  struct version *splitVer2 = malloc(sizeof(struct version));
+  splitVersionString( ver2, splitVer2 );
 
-  if ( atoi(splitVer1.major) > atoi(splitVer2.major) )
-    return 1;
-  if ( atoi(splitVer1.major) < atoi(splitVer2.major) )
-    return -1;
-  if ( atoi(splitVer1.minor) > atoi(splitVer2.minor) )
-    return 1;
-  if ( atoi(splitVer1.minor) < atoi(splitVer2.minor) )
-    return -1;
-  if ( atoi(splitVer1.patch) > atoi(splitVer2.patch) )
-    return 1;
-  if ( atoi(splitVer1.patch) < atoi(splitVer2.patch) )
-    return -1;
+  #ifdef DEBUG
+  printf( "Version 1:\n"
+          "Major: %s\n"
+	  "Minor: %s\n"
+	  "Patch: %s\n"
+	  "Prerelease: %s\n"
+	  "Build: %s\n\n",
+	  splitVer1->major, splitVer1->minor, splitVer1->patch, splitVer1->prerelease, 
+	  splitVer1->build );
+
+  printf( "Version 2:\n"
+          "Major: %s\n"
+	  "Minor: %s\n"
+	  "Patch: %s\n"
+	  "Prerelease: %s\n"
+	  "Build: %s\n",
+	  splitVer2->major, splitVer2->minor, splitVer2->patch, splitVer2->prerelease, 
+	  splitVer2->build );
+  #endif
+
+  int status = 0;
+
+  if ( atoi(splitVer1->major) > atoi(splitVer2->major) )
+  {
+    status = 1;
+  }
+  else if ( atoi(splitVer1->major) < atoi(splitVer2->major) )
+  {
+    status = -1;
+  }
+  else if ( atoi(splitVer1->minor) > atoi(splitVer2->minor) )
+  {
+    status = 1;
+  }
+  else if ( atoi(splitVer1->minor) < atoi(splitVer2->minor) )
+  {
+    status = -1;
+  }
+  else if ( atoi(splitVer1->patch) > atoi(splitVer2->patch) )
+  {
+    status = 1;
+  }
+  else if ( atoi(splitVer1->patch) < atoi(splitVer2->patch) )
+  {
+    status = -1;
+  }
 
   // TODO: compare prerelease strings maybe strncmp() ?
-  return 0;
+  // TODO: free structs on heap
+  return status;
+}
+
+void getVersion ( char *utilityName, char *utilityVersion  )
+{
+  char buf[1024];
+  size_t nread;
+  const char *shortVersion = " -v";
+  const char *longVersion = " --version";
+  char utilityCommand[24] = {'\0'};
+  
+  strcpy( utilityCommand, utilityName );
+  strcat( utilityCommand, longVersion );
+  
+  FILE *uFile = popen( utilityCommand ,"r" );
+  
+  if ( uFile )
+  {
+    while (( nread = fread( buf, 1, sizeof buf, uFile)) > 0 )
+    {
+    }
+      //fwrite( buf, 1, nread, stdout );
+    if (ferror(uFile))
+    {
+    }
+    regmatch_t matchptr[1];
+    size_t nmatch = 1;    
+    if(match( "([[:digit:]]+.){2}[[:digit:]]*([[:digit:]()]+)?(-[[:alnum:].-]+)?", buf, matchptr, nmatch ))
+    {
+      int length = (matchptr[0].rm_eo) - (matchptr[0].rm_so);
+      strncpy( utilityVersion, buf+matchptr[0].rm_so, length );
+      
+      #ifdef DEBUG
+      printf( "Matched: %s\n", utilityVersion );
+      #endif
+    }
+    else
+    {
+      printf( "Match not found\n\n");
+    }
+    fclose( uFile);
+  }
+
+  pclose( uFile );
 }

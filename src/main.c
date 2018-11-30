@@ -12,7 +12,7 @@ static int verbose_flag;
 int main( int argc, char ** argv )
 {
   int c;
-  
+ 
   static struct option long_options[] = 
   {
     {"compare",	required_argument,	0,	'c'},
@@ -115,10 +115,13 @@ int main( int argc, char ** argv )
   we report the final status resulting from them. */
   if (verbose_flag)
     puts ("verbose flag is set");
-
+  
   /* Print any remaining command line arguments (not options). */
   if (optind < argc)
   {
+    char argVersion[24] = {'\0'};
+    getVersion( argv[optind], argVersion );
+    printf("utilityVersion: %s\n", argVersion);
     printf ("non-option ARGV-elements: ");
     while (optind < argc)
     printf ("%s ", argv[optind++]);
