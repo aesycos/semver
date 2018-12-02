@@ -7,12 +7,17 @@
 
 #define UVERSION "12.2.0-alpha.0.1.0+12291991"
 
-static int verbose_flag;
+// static int verbose_flag;
+
+static int cflag, eflag, gflag, lflag, vflag, version_flag = 0;
+char utilityName[24] = {'\0'};
+char utilityVersion[24] = {'\0'};
 
 int main( int argc, char ** argv )
 {
   int c;
- 
+  char cversion[24] = {'\0'};
+
   static struct option long_options[] = 
   {
     {"compare",	required_argument,	0,	'c'},
@@ -20,8 +25,8 @@ int main( int argc, char ** argv )
     {"greater",	required_argument,	0,	'g'},
     {"help",	no_argument,		0,	'h'},
     {"less",	required_argument,	0,	'l'},
-    {"quiet",	no_argument,		&verbose_flag,	0},
-    {"version",	no_argument,		0,	'v'},
+    {"verbose", no_argument, 		&vflag,  1},
+    {"version",	no_argument,		&version_flag,  1},
     {0, 0, 0, 0}
   };
 
@@ -50,54 +55,31 @@ int main( int argc, char ** argv )
       // compare (requires getVersion( utilityName )
       case 'c' :
       { 
-	int eval;
-	eval = compareVersion( UVERSION, optarg );
-        
-	if (eval > 0)
-        {
-          printf("Utility is of newer version\n");
-        }
-        else if ( eval < 0)
-        {
-          printf("Utitliy is of older version\n");
-        }
-        else
-        {
-          printf("Utities are of equal version\n");
-        }
-        break;
+	cflag = 1;
+	strncpy(cversion, optarg, strlen(optarg));
+	break;
       }
       // test if equal
       case 'e' :
-        if (!compareVersion ( UVERSION, optarg ))
-	{
-	  printf( "Versions are equal\n" );
-	}
-	return 0;
-      
+        eflag = 1;
+	strncpy(cversion, optarg, strlen(optarg));
+	break;
+             
       // test if greater
       case 'g' :
-        if (compareVersion( UVERSION, optarg ))
-	{
-          printf( "Versions is greater\n" );
-	}
-	return 0;
-
+        gflag = 1;
+	strncpy(cversion, optarg, strlen(optarg));
+        break;
       // test if less than
       case 'l' :
-        printf("option: less with value `%s`\n", optarg);
+        lflag = 1;
+	strncpy(cversion, optarg, strlen(optarg));
         break;
       
-      // dont echo results just return value
-      case 'q' :
-        printf("option: quiet");
-        break;
-      
-      // display semver version info
+      // be verbose
       case 'v' :
-        displayVersion();
-        return 0;
-      
+        vflag = 1;
+        break; 
       // error handling
       case ':' :
         break;
@@ -106,6 +88,7 @@ int main( int argc, char ** argv )
         break;
       
       default:
+        printf("1\n");
         break;
     }
   }
@@ -113,23 +96,87 @@ int main( int argc, char ** argv )
   /* Instead of reporting ‘--verbose’
   and ‘--brief’ as they are encountered,
   we report the final status resulting from them. */
-  if (verbose_flag)
-    puts ("verbose flag is set");
-  
-  /* Print any remaining command line arguments (not options). */
-  if (optind < argc)
+  if (version_flag)
   {
-    char argVersion[24] = {'\0'};
-    getVersion( argv[optind], argVersion );
-    printf("utilityVersion: %s\n", argVersion);
-    printf ("non-option ARGV-elements: ");
-    while (optind < argc)
-    printf ("%s ", argv[optind++]);
-    putchar ('\n');
+    displayVersion();
+    return 0;
   }
 
-  exit (0);
+  if ( argc == 1 )
+  {
+   fprintf( stderr, "Type `semver --help` for usage information\n");
+   return -127;
+  }
 
+  if ( optind < argc )
+  {
+    strncpy( utilityName, argv[optind], strlen( argv[optind] ) );
+    getVersion( utilityName, utilityVersion );
+  }
+  else
+  {
+    fprintf( stderr, "Error: No utility specified\n" );
+    return -127;
+  }
+  
+  if (cflag)
+  {
+    int eval;
+     
+    eval = compareVersion( utilityVersion, cversion );
+   
+    if (vflag)
+    {
+      if (eval > 1)
+      {
+        printf("Utility version is newer\n");
+      }
+      else if ( eval < 1)
+      {
+        printf("Utilityy version is older\n");
+      }
+      else
+      {
+        printf("Utility version is equal\n");
+      }
+    }
+
+    
+    return eval;
+  }
+
+  if (eflag)
+  {
+    if (compareVersion ( utilityVersion, cversion ) == 1)
+    {
+      if (vflag)
+        printf( "Utility version is equal\n" );
+      return 1;
+    }
+    return 0;
+ }
+
+  if (gflag)
+  {
+     if(compareVersion( utilityVersion, cversion) == 2)
+    {
+      if (vflag)
+        printf( "Utility version is newer\n");
+      return 1;
+    }
+    return 0;
+ }
+
+  if (lflag)
+  {
+     if(!compareVersion( utilityVersion, cversion))
+    {
+      if (vflag)
+      printf( "Utility version is older\n");
+      return 1;
+    }
+    return 0;
+  }
   return 0;
 }
 

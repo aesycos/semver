@@ -32,7 +32,7 @@ int match( const char *pattern, const char *string, regmatch_t *matchptr,
   else                               // Regex error
   {
     regerror( status, &re, msgbuf, sizeof(msgbuf) );
-    fprintf( stderr, "Erro: Regex match failed: %s\n", msgbuf);
+    fprintf( stderr, "Error: Regex match failed: %s\n", msgbuf);
     return -1;
   }
 
@@ -50,10 +50,6 @@ int checkVersionFormat( const char *string )
   return 1;
 }
 
-int semverNewer( const char *ver1, const char *ver2 )
-{        
-  return 0;
-}
 
 void splitVersionString( const char *verStr, struct version *splitVersion )
 {
@@ -61,15 +57,12 @@ void splitVersionString( const char *verStr, struct version *splitVersion )
   regmatch_t matchptr[1];
   //struct version splitVersion;
 
-  match ( "([[:digit:]].){2}[[:digit:]]", verStr, matchptr, (size_t) 1 );
+  match ( "([[:digit:]]+.){2}[[:digit:]]*", verStr, matchptr, (size_t) 1 );
   
   int length = (matchptr[0].rm_eo) - (matchptr[0].rm_so);
   char shortVer[16] = {'\0'};
 
-  // dont realy know why im adding 1 to length but it seems to work
-  // for some reason length is a single byte short related to how regexec()
-  // returns, start and end of substring in matchptr[] ARRAYS START AT 0
-  strncpy( shortVer, verStr+matchptr[0].rm_so-1, length+1);
+  strncpy( shortVer, verStr+matchptr[0].rm_so, length);
   strcpy( splitVersion->major, strtok( shortVer, "." ));
   strcpy( splitVersion->minor, strtok( NULL, "." ));
   strcpy( splitVersion->patch, strtok( NULL, "."));
@@ -84,10 +77,6 @@ void splitVersionString( const char *verStr, struct version *splitVersion )
           (matchptr[0].rm_eo - matchptr[0].rm_so)-1 );
     strcpy( splitVersion->prerelease, shortPR);
   }
-  //else
-  //{
-  //  splitVersion.prerelease = "";
-  //}
   
   // extract build info
   if(match("\\+[[:alnum:].-]+", verStr, matchptr, (size_t) 1))
@@ -97,12 +86,6 @@ void splitVersionString( const char *verStr, struct version *splitVersion )
           (matchptr[0].rm_eo - matchptr[0].rm_so)-1 );
     strcpy( splitVersion->build, shortBuild);
   }
-  //else
-  //{
-  //  splitVersion.build = "";
-  //}
-
-    //return splitVersion;
 }
 
 int compareVersion( const char *ver1, const char *ver2 )
@@ -118,69 +101,51 @@ int compareVersion( const char *ver1, const char *ver2 )
   struct version *splitVer2 = malloc(sizeof(struct version));
   splitVersionString( ver2, splitVer2 );
 
-  #ifdef DEBUG
-  printf( "Version 1:\n"
-          "Major: %s\n"
-	  "Minor: %s\n"
-	  "Patch: %s\n"
-	  "Prerelease: %s\n"
-	  "Build: %s\n\n",
-	  splitVer1->major, splitVer1->minor, splitVer1->patch, splitVer1->prerelease, 
-	  splitVer1->build );
-
-  printf( "Version 2:\n"
-          "Major: %s\n"
-	  "Minor: %s\n"
-	  "Patch: %s\n"
-	  "Prerelease: %s\n"
-	  "Build: %s\n",
-	  splitVer2->major, splitVer2->minor, splitVer2->patch, splitVer2->prerelease, 
-	  splitVer2->build );
-  #endif
-
-  int status = 0;
+  int status = 1;
 
   if ( atoi(splitVer1->major) > atoi(splitVer2->major) )
   {
-    status = 1;
+    status = 2;
   }
   else if ( atoi(splitVer1->major) < atoi(splitVer2->major) )
   {
-    status = -1;
+    status = 0;
   }
   else if ( atoi(splitVer1->minor) > atoi(splitVer2->minor) )
   {
-    status = 1;
+    status = 2;
   }
   else if ( atoi(splitVer1->minor) < atoi(splitVer2->minor) )
   {
-    status = -1;
+    status = 0;
   }
   else if ( atoi(splitVer1->patch) > atoi(splitVer2->patch) )
   {
-    status = 1;
+    status = 2;
   }
   else if ( atoi(splitVer1->patch) < atoi(splitVer2->patch) )
   {
-    status = -1;
+    status = 0;
   }
 
   // TODO: compare prerelease strings maybe strncmp() ?
   // TODO: free structs on heap
+  free(splitVer1);
+  free(splitVer2);
+
   return status;
 }
 
-void getVersion ( char *utilityName, char *utilityVersion  )
+void getVersion ( const char *utilityName, char *utilityVersion  )
 {
-  char buf[1024];
+  char buf[256];
   size_t nread;
-  const char *shortVersion = " -v";
   const char *longVersion = " --version";
   char utilityCommand[24] = {'\0'};
   
   strcpy( utilityCommand, utilityName );
   strcat( utilityCommand, longVersion );
-  
+
   FILE *uFile = popen( utilityCommand ,"r" );
   
   if ( uFile )
@@ -188,27 +153,22 @@ void getVersion ( char *utilityName, char *utilityVersion  )
     while (( nread = fread( buf, 1, sizeof buf, uFile)) > 0 )
     {
     }
-      //fwrite( buf, 1, nread, stdout );
     if (ferror(uFile))
     {
     }
     regmatch_t matchptr[1];
     size_t nmatch = 1;    
+    
     if(match( "([[:digit:]]+.){2}[[:digit:]]*([[:digit:]()]+)?(-[[:alnum:].-]+)?", buf, matchptr, nmatch ))
     {
       int length = (matchptr[0].rm_eo) - (matchptr[0].rm_so);
       strncpy( utilityVersion, buf+matchptr[0].rm_so, length );
-      
-      #ifdef DEBUG
-      printf( "Matched: %s\n", utilityVersion );
-      #endif
     }
     else
     {
-      printf( "Match not found\n\n");
+      exit(255);
     }
-    fclose( uFile);
+    fclose( uFile );
   }
-
   pclose( uFile );
 }

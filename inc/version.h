@@ -20,16 +20,10 @@ struct version
 
 void displayHelp();
 void displayVersion();
-void getMajor( const char *verString );
-void getMinor( const char *verString );
-void getPatch( const char *verString);
-void getPrerelease( const char *verString );
-void getBuildmeta( const char *verString );
-void getPrecedence( const char *verString );
-void getVersion( char *utilityName, char *utilityVersion );
+void getVersion( const char *utilityName, char *utilityVersion );
 int checkVersionFormat( const char *string );
-int semverNewer( const char *ver1, const char *ver2 );
 void splitVersionString( const char *verStr, struct version * );
 int compareVersion( const char *ver1, const char *ver2 );
+
 
 #endif
