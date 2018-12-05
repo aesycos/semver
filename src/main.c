@@ -99,7 +99,7 @@ int main( int argc, char ** argv )
                                 printf( "Utility version is newer.\n");
                         else
                                 printf( "Utility is the same version.\n");
-
+			printf( "%s: %s\n", utilityName, utilityVersion );
                 }
                 return status;
         }

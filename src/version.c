@@ -118,11 +118,16 @@ void getVersion ( const char *utilityName, char *utilityVersion  )
         FILE *uFile;
 
         // concatenate utilityCommand and options to display version information
-        strcpy( utilityCommand, utilityName );
+        if ( !strcmp( utilityName, "kernel" ) )
+		strcpy( utilityCommand, "cat /proc/version" );
+	else
+		strcpy( utilityCommand, utilityName );
 
-        if( !strcmp( utilityName, "bzip2" ) )             // something fucky here
+        if ( !strcmp( utilityName, "bzip2" ) )             // something fucky here
                 strcat( utilityCommand, " --help 2>&1" );
-        else
+	else if ( !strcmp(utilityName, "kernel" ) )
+		;
+	else
                 strcat( utilityCommand, " --version" );
 
         uFile = popen( utilityCommand, "r");
@@ -140,4 +145,5 @@ void getVersion ( const char *utilityName, char *utilityVersion  )
         }
 
         pclose(uFile);
+	//printf("%s: %s\n", utilityName, utilityVersion);
 }

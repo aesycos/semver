@@ -57,4 +57,8 @@ if [ $FAIL -eq 1 ]; then
 	echo "Failed minimum system requirements for building LFS"
 else
 	echo "Minimum System Reuirements Met!"
+<<<<<<< Updated upstream
 fi
+=======
+fi
+>>>>>>> Stashed changes
