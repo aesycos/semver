@@ -1,5 +1,5 @@
 CC	:= gcc
-CFLAGS	:= -Wall
+CFLAGS	:= -Wall -DDEBUG -g
 INC	:= inc
 
 
@@ -14,6 +14,7 @@ TARGET	:= semver
 INPATH 	:= /usr/local/bin/
 
 all: $(TARGET)
+	strip -s $(BINDIR)/$(TARGET)
 	@echo "Build completed successfully"
 
 $(TARGET): $(OBJ)
