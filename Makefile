@@ -1,5 +1,5 @@
 CC	:= gcc
-CFLAGS	:= -Wall -DDEBUG -g
+CFLAGS	:= -Os -Wall
 INC	:= inc
 
 
